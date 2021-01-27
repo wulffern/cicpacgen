@@ -33,10 +33,42 @@ import pandas as pd
 import re
 
 
+class PinList():
+    def __init__(self,category):
+        self.category = category
+
+    def color(self,name):
+        for c in self.category:
+            if(re.search(c["regex"],name)):
+               return c["color"]
+        return "black"
+
+    def iotype(self,name):
+
+        for c in self.category:
+            if(re.search(c["regex"],name)):
+               return c["type"]
+        return "io"
+    
+
+
 class SvgQfn(svgwrite.Drawing):
 
-    def __init__(self,x_org,y_org,width,height,step,svg_file,**args):
+    def isOptionFalse(self,name):
+        if(name in self.options and self.options[name] == False):
+            return True
+        else:
+            return False
 
+    def isOptionTrue(self,name):
+        if(name in self.options and self.options[name] == False):
+            return False
+        else:
+            return True
+
+    
+    def __init__(self,x_org,y_org,width,height,step,svg_file,pins,options,**args):
+        self.options = options
         self.x = x_org
         self.y = y_org
         self.width = width
@@ -44,9 +76,10 @@ class SvgQfn(svgwrite.Drawing):
         self.step = step
         self.x_center = self.x + width/2
         self.y_center =  self.y + height/2
-        self.font_size_text = np.sqrt(width*height)/10
+        self.font_size_text = width/8
         self.font_size_pin = self.font_size_text/4
         self.data = list()
+        self.pins = pins
         super().__init__(svg_file,profile='tiny',**args)
 
     def qfn_box(self,name,title):
@@ -55,13 +88,15 @@ class SvgQfn(svgwrite.Drawing):
         gr.add(self.rect((self.x,self.y),(self.width,self.height),fill="none",stroke="black",stroke_width=3))
         gr.add(self.text(title,
                          insert=(self.x_center,self.y_center),text_anchor="middle",font_family="Arial",font_size=self.font_size_text))
-        gr.add(self.text(name,
-                         insert=(self.x_center,self.y_center+self.font_size_text),text_anchor="middle",font_family="Arial",font_size=self.font_size_text*3/4))
+
+        if(self.isOptionTrue("packagetext")):
+            gr.add(self.text(name,
+                             insert=(self.x_center,self.y_center+self.font_size_text),text_anchor="middle",font_family="Arial",font_size=self.font_size_text*3/4))
         return gr
 
     def addPinToDf(self,name,nr):
 
-        io_type = "N/A"
+        io_type = self.pins.iotype(name)
 
         self.data.append([nr,name,io_type])
 
@@ -145,15 +180,21 @@ class SvgQfn(svgwrite.Drawing):
                          text_anchor=text_anchor,
                          transform=transform % (xtn,ytn)
         )
-        gr.add(t_nr)
+        if(self.isOptionTrue("number")):
+            gr.add(t_nr)
 
         r = self.rect((xr,yr),(wr,hr),fill="white",stroke="black",stroke_width=1)
         gr.add(r)
+
+        tcolor =  self.pins.color(name)
+        if(re.search("^\s*NC",name)):
+            tcolor = "lightgray"
 
         gr.add(self.text(name,
                          insert=(xt,yt),
                          font_family="Arial",
                          font_size=self.font_size_pin,
+                         fill=tcolor,
                          text_anchor=text_anchor,
                          transform=transform % (xt,yt)
         ))
@@ -211,12 +252,26 @@ def pacgen(yaml_file):
     x_org = (svgwidth - width)/2
     y_org = (svgheight - height)/2
 
-    #- Init file
-    svg = SvgQfn(x_org,y_org,width,height,step,svg_file,size=(svgwidth,svgheight))
+    pins = None
+    if("category" in ym):
+        pins = PinList(ym["category"])
 
+    options = dict()
+    if("options" in ym):
+        options = ym["options"]
+        
+    #- Init file
+    svg = SvgQfn(x_org,y_org,width,height,step,svg_file,pins,options,size=(svgwidth,svgheight))
+
+    
+    
     #- Print pins
     for key in ("top","bottom","left","right"):
-        svg.add(svg.qfn_pins(x_org,y_org,step,pins_per_side,key,ym[key]["anchor"],ym[key]["pins"]))
+        pins = ym[key]["pins"]
+        if(pins == None):
+            continue
+
+        svg.add(svg.qfn_pins(x_org,y_org,step,pins_per_side,key,ym[key]["anchor"],pins))
 
     #- Add QFN box
     svg.add(svg.qfn_box(ym["package"] + str(ym["pins"]) + "_" + str(ym["width"]) + "x" + str(ym["height"]),ym["title"]))
