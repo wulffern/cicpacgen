@@ -34,7 +34,7 @@ import re
 
 
 class PinList():
-    def __init__(self,category):
+    def __init__(self,category=dict()):
         self.category = category
 
     def color(self,name):
@@ -67,7 +67,7 @@ class SvgQfn(svgwrite.Drawing):
             return True
 
     
-    def __init__(self,x_org,y_org,width,height,step,svg_file,pins,options,**args):
+    def __init__(self,x_org,y_org,width,height,step,svg_file,text_scale,pins,options,**args):
         self.options = options
         self.x = x_org
         self.y = y_org
@@ -76,7 +76,7 @@ class SvgQfn(svgwrite.Drawing):
         self.step = step
         self.x_center = self.x + width/2
         self.y_center =  self.y + height/2
-        self.font_size_text = width/8
+        self.font_size_text = width/text_scale
         self.font_size_pin = self.font_size_text/4
         self.data = list()
         self.pins = pins
@@ -249,19 +249,25 @@ def pacgen(yaml_file):
     svgwidth = width*1.8
     svgheight = height*1.8
 
+    text_scale = 8
+    if("textscale" in ym):
+        text_scale = ym["textscale"]
+
     x_org = (svgwidth - width)/2
     y_org = (svgheight - height)/2
 
     pins = None
     if("category" in ym):
         pins = PinList(ym["category"])
+    else:
+        pins = PinList()
 
     options = dict()
     if("options" in ym):
         options = ym["options"]
         
     #- Init file
-    svg = SvgQfn(x_org,y_org,width,height,step,svg_file,pins,options,size=(svgwidth,svgheight))
+    svg = SvgQfn(x_org,y_org,width,height,step,svg_file,text_scale,pins,options,size=(svgwidth,svgheight))
 
     
     

@@ -5,6 +5,27 @@ title: nRF52832
 width: 6
 height: 6
 scale: 90
+textscale: 8
+
+category:
+  - regex:  "VDD"
+    color: "red"
+    type: "power"
+  - regex:  "VSS"
+    color: "blue"
+    type: "power"
+  - regex: "XC1|ANT"
+    color: "green"
+    type: "input"
+  - regex: "XC2"
+    color: "green"
+    type: "output"
+  - regex: "NC"
+    color: "lightgray"
+    type: "io"
+  - regex: ".*"
+    color: "black"
+    type: "io"
 
 top:
   anchor: right
