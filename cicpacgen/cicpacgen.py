@@ -31,6 +31,8 @@ import svgwrite
 import numpy as np
 import pandas as pd
 import re
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF, renderPM
 
 
 class PinList():
@@ -188,7 +190,7 @@ class SvgQfn(svgwrite.Drawing):
 
         tcolor =  self.pins.color(name)
         if(re.search("^\s*NC",name)):
-            tcolor = "lightgray"
+            tcolor = "gray"
 
         gr.add(self.text(name,
                          insert=(xt,yt),
@@ -232,7 +234,8 @@ class SvgQfn(svgwrite.Drawing):
 
 @click.command()
 @click.argument("YAML_FILE")
-def pacgen(yaml_file):
+@click.option("--pdf",default=False,is_flag=True,help="Print PDF file (limited color support)")
+def pacgen(yaml_file,pdf):
     with open(yaml_file,"r") as fi:
         ym = yaml.safe_load(fi)
 
@@ -284,6 +287,11 @@ def pacgen(yaml_file):
 
     #- Save SVG
     svg.save()
+
+    if(pdf):
+        drawing = svg2rlg(svg_file)
+        pdf_file = svg_file.replace(".svg",".pdf")
+        renderPDF.drawToFile(drawing, pdf_file)
 
     #- Save pinlist
     df = pd.DataFrame(svg.data,columns=["nr","name","type"])

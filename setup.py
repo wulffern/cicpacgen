@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="cicpacgen-pkg", # Replace with your own username
-    version="0.0.1",
+    name="cicpacgen",
+    version="0.0.2",
     author="Carsten Wulff",
     author_email="carsten@wulff.no",
     description="Custom IC Creator Package outline generator",
@@ -17,7 +17,7 @@ setuptools.setup(
     entry_points = {'console_scripts': [
         'cicpacgen = cicpacgen.cicpacgen:pacgen',
     ]},
-    install_requires = 'PyYAML click svgwrite numpy pandas  '.split(),
+    install_requires = 'PyYAML click svgwrite numpy pandas svglib reportlab  '.split(),
     classifiers = [
         'Development Status :: 1 - Alpha',
         'Intended Audience :: Developers',
